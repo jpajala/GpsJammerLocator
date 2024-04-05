@@ -40,14 +40,29 @@ namespace GPSJammerLocator
             }
 
             var heatCells = heat.GetHeatOrderedCells();
-            Console.WriteLine($"lat, lon, heat");
-            foreach (var cell in heatCells)
-            {
-                (float lat, float lon) = CoordinateConverter.ConvertMetricToLatLon(cell.CenterX, cell.CenterY);
-                CultureInfo ci = CultureInfo.InvariantCulture;
-                Console.WriteLine($"{lat.ToString(ci)},{lon.ToString(ci)},{cell.HeatCounter}");
-            }
+            //Console.WriteLine($"lat, lon, heat");
+            //foreach (var cell in heatCells)
+            //{
+            //    (float lat, float lon) = CoordinateConverter.ConvertMetricToLatLon(cell.CenterX, cell.CenterY);
+            //    CultureInfo ci = CultureInfo.InvariantCulture;
+            //    Console.WriteLine($"{lat.ToString(ci)},{lon.ToString(ci)},{cell.HeatCounter}");
+            //}
+            string filePath = @"C:\Temp\output.csv";
 
+            // Using StreamWriter to open the file for writing
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine($"lat,lon,heat");
+                foreach (var cell in heatCells)
+                {
+                    (float lat, float lon) = CoordinateConverter.ConvertMetricToLatLon(cell.CenterX, cell.CenterY);
+                    CultureInfo ci = CultureInfo.InvariantCulture;
+
+                    // Writing formatted string to file
+                    writer.WriteLine($"{lat.ToString(ci)},{lon.ToString(ci)},{cell.HeatCounter}");
+                }
+            }
+            Console.WriteLine("Done. Press enter.")
             Console.ReadLine();
         }
     }

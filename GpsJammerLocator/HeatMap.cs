@@ -69,8 +69,8 @@ namespace GPSJammerLocator
         private (float, float) CellCenterByColRow(int slotX, int slotY)
         {
             // Calculate the x coordinate
-            float x = ((float)slotX + 0.5F) * CellWidth;
-            float y = ((float)slotY + 0.5F) * CellWidth;
+            float x = ((float)slotX) * CellWidth;
+            float y = ((float)slotY) * CellWidth;
 
             return (x, y);
         }
