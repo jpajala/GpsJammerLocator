@@ -40,7 +40,6 @@ namespace GPSJammerLocator
             Console.WriteLine($"\n\nDates: {numDates}");
 #endif
             Console.WriteLine("Done. Press enter.");
-            Console.ReadLine();
         }
 
         private static void ComputeAndOutput(string filePath, List<Circle> circles)

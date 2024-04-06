@@ -26,8 +26,8 @@ namespace GPSJammerLocator
                 Vector2 vectorFromOther = point - other.Center;
 
                 float angle = Vector2Angle(vectorFromThis, vectorFromOther);
-
-                if (angle >= 25 && angle <= 90)
+                const float minAcceptedAngle = 40;
+                if (angle >= minAcceptedAngle && angle <= 180-minAcceptedAngle)
                 {
                     ToRet.Add(point);
                 }
