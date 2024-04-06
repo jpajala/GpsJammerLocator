@@ -1,4 +1,4 @@
-﻿#define ALL_IN_ONE
+﻿//#define ALL_IN_ONE
 
 using GpsJammerLocator;
 using System;
