@@ -19,10 +19,27 @@ namespace GPSJammerLocator
         {
             return feet * 0.3048F;
         }
-        public static List<Circle> Parse()
+
+        public static List<Circle> Parse(string filepath)
         {
-            string filePath = @"C:\Temp\Dataset.txt";
-            List<Circle> result = new List<Circle>();
+            // Call ParseDaily to get the circles organized by day
+            var dailyCircles = ParseDaily(filepath);
+
+            // Initialize the list to hold all circles
+            List<Circle> allCircles = new List<Circle>();
+
+            // Go through each day's circles in the order they were added to the dictionary
+            // and add them to the allCircles list
+            foreach (var dayCircles in dailyCircles.Values)
+            {
+                allCircles.AddRange(dayCircles);
+            }
+
+            return allCircles;
+        }
+        public static Dictionary<DateTime, List<Circle>> ParseDaily(string filePath)
+        {
+            var dailyCircles = new Dictionary<DateTime, List<Circle>>();
 
             // Check if the file exists
             if (!File.Exists(filePath))
@@ -32,29 +49,38 @@ namespace GPSJammerLocator
 
             using (StreamReader sr = new StreamReader(filePath))
             {
-                string currentLine;
                 // Skip the header line
                 sr.ReadLine();
 
-                while ((currentLine = sr.ReadLine()) != null)
+                while (sr.ReadLine() is string currentLine)
                 {
                     // Split the line into columns based on comma
                     string[] fields = currentLine.Split(',');
 
-                    // Extract lat, lon, and alt_geom fields
-                    string lat = fields[2];
-                    string lon = fields[3];
-                    string altGeom = fields[7];
+                    // Extract timestamp, lat, lon, and alt_geom fields
+                    DateTime timestamp = DateTime.ParseExact(fields[0], "yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture).Date; // Normalize to date
+                    float lat = float.Parse(fields[2], CultureInfo.InvariantCulture);
+                    float lon = float.Parse(fields[3], CultureInfo.InvariantCulture);
+                    float altGeom = float.Parse(fields[7], CultureInfo.InvariantCulture);
 
-                    (float x, float y) = CoordinateConverter.ConvertLatLonToMetric(float.Parse(lat, CultureInfo.InvariantCulture), float.Parse(lon, CultureInfo.InvariantCulture));
+                    // Convert latitude and longitude to metric coordinates (x, y)
+                    (float x, float y) = CoordinateConverter.ConvertLatLonToMetric(lat, lon);
 
-                    result.Add(new Circle(x, y, GetRadioHorizonRadius(SenderHeightM, FeetToMeters(float.Parse(altGeom, CultureInfo.InvariantCulture)))));
+                    // Assume GetRadioHorizonRadius and SenderHeightM are defined elsewhere
+                    var circle = new Circle(x, y, GetRadioHorizonRadius(SenderHeightM, FeetToMeters(altGeom)));
 
-                    // Output or process the extracted values
-                    //Console.WriteLine($"Lat: {lat}, Lon: {lon}, Alt_Geom: {altGeom}, radius: {result.Last().R}");
+                    // Check if the date already exists in the dictionary
+                    if (!dailyCircles.ContainsKey(timestamp))
+                    {
+                        dailyCircles[timestamp] = new List<Circle>();
+                    }
+
+                    // Add the circle to the list for the corresponding day
+                    dailyCircles[timestamp].Add(circle);
                 }
             }
-            return result;
+
+            return dailyCircles;
         }
     }
 }
