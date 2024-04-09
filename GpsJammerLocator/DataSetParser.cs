@@ -10,12 +10,12 @@ namespace GPSJammerLocator
 {
     internal class DataSetParser
     {
-        const float SenderHeightM = 0; // radio sender height from ground, meters
-        private static float GetRadioHorizonRadius(float TxHeightM, float RxHeightM)
+        const double SenderHeightM = 0; // radio sender height from ground, meters
+        private static double GetRadioHorizonRadius(double TxHeightM, double RxHeightM)
         {
-            return 4120 * MathF.Sqrt(TxHeightM) + 4120 * MathF.Sqrt(RxHeightM);
+            return 4120 * Math.Sqrt(TxHeightM) + 4120 * Math.Sqrt(RxHeightM);
         }
-        public static float FeetToMeters(float feet)
+        public static double FeetToMeters(double feet)
         {
             return feet * 0.3048F;
         }
@@ -59,12 +59,12 @@ namespace GPSJammerLocator
 
                     // Extract timestamp, lat, lon, and alt_geom fields
                     DateTime timestamp = DateTime.ParseExact(fields[0], "yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture).Date; // Normalize to date
-                    float lat = float.Parse(fields[2], CultureInfo.InvariantCulture);
-                    float lon = float.Parse(fields[3], CultureInfo.InvariantCulture);
-                    float altGeom = float.Parse(fields[7], CultureInfo.InvariantCulture);
+                    double lat = double.Parse(fields[2], CultureInfo.InvariantCulture);
+                    double lon = double.Parse(fields[3], CultureInfo.InvariantCulture);
+                    double altGeom = double.Parse(fields[7], CultureInfo.InvariantCulture);
 
                     // Convert latitude and longitude to metric coordinates (x, y)
-                    (float x, float y) = CoordinateConverter.ConvertLatLonToMetric(lat, lon);
+                    (double x, double y) = CoordinateConverter.ConvertLatLonToMetric(lat, lon);
 
                     // Assume GetRadioHorizonRadius and SenderHeightM are defined elsewhere
                     var circle = new Circle(x, y, GetRadioHorizonRadius(SenderHeightM, FeetToMeters(altGeom)));

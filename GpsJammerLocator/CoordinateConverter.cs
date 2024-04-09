@@ -19,16 +19,16 @@ namespace GPSJammerLocator
         static private ICoordinateTransformation _toLatLonTransform = coordinateTransformationFactory.CreateFromCoordinateSystems(ProjectedCoordinateSystem.WGS84_UTM(33, true), GeographicCoordinateSystem.WGS84);
 
 
-        static public (float X, float Y) ConvertLatLonToMetric(double latitude, double longitude)
+        static public (double X, double Y) ConvertLatLonToMetric(double latitude, double longitude)
         {
             var transformed = _toMetricTransform.MathTransform.Transform(new double[] { longitude, latitude });
-            return ((float)transformed[0], (float)transformed[1]);
+            return ((double)transformed[0], (double)transformed[1]);
         }
 
-        static public (float Latitude, float Longitude) ConvertMetricToLatLon(float x, float y)
+        static public (double Latitude, double Longitude) ConvertMetricToLatLon(double x, double y)
         {
             var transformed = _toLatLonTransform.MathTransform.Transform(new double[] { x, y });
-            return ((float)transformed[1], (float)transformed[0]);
+            return ((double)transformed[1], (double)transformed[0]);
         }
     }
 }

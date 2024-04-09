@@ -1,11 +1,8 @@
-﻿//#define ALL_IN_ONE
+﻿#define ALL_IN_ONE
 
 using GpsJammerLocator;
-using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Globalization;
-using System.Numerics;
-using System.Reflection;
 
 
 namespace GPSJammerLocator
@@ -27,46 +24,53 @@ namespace GPSJammerLocator
 #else
             var data = DataSetParser.ParseDaily(dataset);
 #endif
-#if ALL_IN_ONE                
             ComputeAndOutput(filePath, data);
-#else
-            int numDates = 0;
-            foreach (var key in data.Keys)
-            {
-                Console.WriteLine(key);
-                ComputeAndOutput(AddDateToFilename(filePath, key), data[key]);
-                numDates++;
-            }
-            Console.WriteLine($"\n\nDates: {numDates}");
-#endif
             Console.WriteLine("Done. Press enter.");
         }
+#if ALL_IN_ONE
 
         private static void ComputeAndOutput(string filePath, List<Circle> circles)
+#else
+        private static void ComputeAndOutput(string filePath, Dictionary<DateTime, List<Circle>> dailydata)
+#endif
         {
-            Console.WriteLine($"Individual circles: {circles.Count}");
-
-            List<Vector2> intersections;
-            ComputeIntersections(circles, out intersections);
-            HeatMap heat = ComputeHeatMap(intersections);
-            var heatCells = heat.GetHeatOrderedCells();
-            Console.WriteLine("Output File: " + filePath);
-            // Using StreamWriter to open the file for writing
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine($"lat,lon,heat");
-                foreach (var cell in heatCells)
+                writer.Write($"lat,lon,heat");
+#if ALL_IN_ONE
+                    writer.WriteLine();
+#else
+                writer.WriteLine(",date");
+                foreach (var day in dailydata.Keys)
                 {
-                    (float lat, float lon) = CoordinateConverter.ConvertMetricToLatLon(cell.CenterX, cell.CenterY);
-                    CultureInfo ci = CultureInfo.InvariantCulture;
+                    Console.WriteLine(day);
+                    List<Circle> circles = dailydata[day];
+#endif
+                    Console.WriteLine($"Individual circles: {circles.Count}");
 
-                    // Writing formatted string to file
-                    writer.WriteLine($"{lat.ToString(ci)},{lon.ToString(ci)},{cell.HeatCounter}");
+                    List<Vector2d> intersections;
+                    ComputeIntersections(circles, out intersections);
+                    HeatMap heat = ComputeHeatMap(intersections);
+                    var heatCells = heat.GetHeatOrderedCells();
+                    Console.WriteLine("Output File: " + filePath);
+                    // Using StreamWriter to open the file for writing
+                    foreach (var cell in heatCells)
+                    {
+                        (double lat, double lon) = CoordinateConverter.ConvertMetricToLatLon(cell.CenterX, cell.CenterY);
+                        CultureInfo ci = CultureInfo.InvariantCulture;
+
+                        // Writing formatted string to file
+                        writer.Write($"{lat.ToString(ci)},{lon.ToString(ci)},{cell.HeatCounter}");
+#if ALL_IN_ONE
+                        writer.WriteLine();
+#else
+                        writer.WriteLine(","+day.ToString("ddMMyyyy"));
+                    }
+#endif
                 }
             }
         }
-
-        private static HeatMap ComputeHeatMap(List<Vector2> intersections)
+        private static HeatMap ComputeHeatMap(List<Vector2d> intersections)
         {
             HeatMap heat = new HeatMap(10000);
             ProgressBar progressBar = new ProgressBar(intersections.Count);
@@ -79,29 +83,42 @@ namespace GPSJammerLocator
             return heat;
         }
 
-        private static void ComputeIntersections(List<Circle> circles, out List<Vector2> intersections)
+        private static void ComputeIntersections(List<Circle> circles, out List<Vector2d> intersections)
         {
-            intersections = new List<Vector2>();
-
-            // Choose one circle and find its good intersections with the rest
+            ConcurrentBag<Vector2d> tempIntersections = new ConcurrentBag<Vector2d>();
+            int totalOperations = circles.Count * (circles.Count - 1) / 2;
             Console.WriteLine("Computing intersections");
-            ProgressBar pb = new ProgressBar(circles.Count * (circles.Count - 1) / 2);
+            ProgressBar pb = new ProgressBar(totalOperations);
             int ctr = 0;
+
             if (circles.Count > 1)
             {
-                for (int i = 0; i < circles.Count; i++)
+                Parallel.For(0, circles.Count, i =>
                 {
                     for (int j = i + 1; j < circles.Count; j++)
                     {
                         var goodIntersections = circles[i].GetGoodIntersections(circles[j]);
-                        intersections.AddRange(goodIntersections);
-                        ctr++;
+                        foreach (var intersection in goodIntersections)
+                        {
+                            tempIntersections.Add(intersection);
+                        }
+
+                        int updatedCtr = Interlocked.Increment(ref ctr);
+                        // Updating the progress bar for every increment might be too frequent and cause performance issues
+                        // Consider updating the progress bar less frequently or outside the parallel loop
+                        // Update the progress bar after completing the parallel operation
                         pb.Update(ctr);
                     }
-                }
+                });
+
             }
+
+            // If order matters or further processing is needed, handle it here
+            intersections = new List<Vector2d>(tempIntersections);
+
             Console.WriteLine($"Num intersections: {intersections.Count}");
         }
+
         public static string AddDateToFilename(string originalFilename, DateTime date)
         {
             // Split the original filename into prefix and postfix

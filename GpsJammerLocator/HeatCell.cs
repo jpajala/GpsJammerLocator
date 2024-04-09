@@ -10,11 +10,11 @@ namespace GPSJammerLocator
     {
         public int Column { get; }
         public int Row { get; }
-        public float CenterX { get; }
-        public float CenterY { get; }
+        public double CenterX { get; }
+        public double CenterY { get; }
         public int HeatCounter { get; set; }
 
-        public HeatCell(int column, int row, float centerX, float centerY)
+        public HeatCell(int column, int row, double centerX, double centerY)
         {
             Column = column;
             Row = row;

@@ -20,22 +20,27 @@ namespace GpsJammerLocator
             _barLength = barLength;
         }
 
+        private readonly object _updateLock = new object();
+
         public void Update(int currentCount)
         {
-            if (complete) return;
-
-            double percentage = currentCount * 100.0 / _total;
-            int currentDots = (int)(percentage / 100 * _barLength);
-
-            if (currentDots != _lastDots || (int)percentage != _lastPercentage)
+            lock (_updateLock) // Ensure only one thread can enter this block at any time
             {
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write("[");
-                Console.Write(new string('.', currentDots) + new string(' ', _barLength - currentDots));
-                Console.Write($"] {(int)percentage}% ");
-                _lastDots = currentDots;
-                _lastPercentage = (int)percentage;
-                if (percentage == 100) Complete();
+                if (complete) return;
+
+                double percentage = currentCount * 100.0 / _total;
+                int currentDots = (int)(percentage / 100 * _barLength);
+
+                if (currentDots != _lastDots || (int)percentage != _lastPercentage)
+                {
+                    Console.SetCursorPosition(0, Console.CursorTop);
+                    Console.Write("[");
+                    Console.Write(new string('.', currentDots) + new string(' ', _barLength - currentDots));
+                    Console.Write($"] {(int)percentage}% ");
+                    _lastDots = currentDots;
+                    _lastPercentage = (int)percentage;
+                    if (percentage == 100) Complete();
+                }
             }
         }
 

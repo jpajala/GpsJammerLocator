@@ -12,9 +12,9 @@ namespace GPSJammerLocator
     {
         private Dictionary<(int, int), HeatCell> cells = new Dictionary<(int, int), HeatCell>();
 
-        private float CellWidth;
+        private double CellWidth;
 
-        public HeatMap(float cellwidth)
+        public HeatMap(double cellwidth)
         {
             this.CellWidth = cellwidth;
         }
@@ -24,7 +24,7 @@ namespace GPSJammerLocator
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void AddPoint(float x, float y)
+        public void AddPoint(double x, double y)
         {
             (int column, int row) = GetCellColRow(x, y);
 
@@ -38,7 +38,7 @@ namespace GPSJammerLocator
                 (centerX, centerY) = CellCenterByColRow(column, row);
                 
                 // This is just debugging 
-                (int column2, int row2) = GetCellColRow((float)centerX, (float)centerY);
+                (int column2, int row2) = GetCellColRow((double)centerX, (double)centerY);
                 if(row2 != row || column2 != column)
                 {
                     // we should never come here
@@ -46,7 +46,7 @@ namespace GPSJammerLocator
                 }
 
 
-                cell = new HeatCell(column, row, (float)centerX, (float)centerY);
+                cell = new HeatCell(column, row, (double)centerX, (double)centerY);
                 cells[key] = cell;
                 //Console.WriteLine($"NEW : {cell.Row} {cell.Column} allocated heatmap cells: {cells.Count + 1}");
             }
@@ -58,7 +58,7 @@ namespace GPSJammerLocator
             cell.HeatCounter += 1;
         }
 
-        private (int, int) GetCellColRow(float x, float y)
+        private (int, int) GetCellColRow(double x, double y)
         {
             // normalize grid cells
             int slotX = (int)(x / CellWidth);
@@ -66,11 +66,11 @@ namespace GPSJammerLocator
 
             return (slotX, slotY);
         }
-        private (float, float) CellCenterByColRow(int slotX, int slotY)
+        private (double, double) CellCenterByColRow(int slotX, int slotY)
         {
             // Calculate the x coordinate
-            float x = ((float)slotX) * CellWidth;
-            float y = ((float)slotY) * CellWidth;
+            double x = ((double)slotX) * CellWidth;
+            double y = ((double)slotY) * CellWidth;
 
             return (x, y);
         }
